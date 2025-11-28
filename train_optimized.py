@@ -427,14 +427,14 @@ def create_model(config):
             name=f'mha_{i}'
         )(x, x, attention_mask=mask_input[:, tf.newaxis, tf.newaxis, :])
         
-        x = layers.LayerNormalization(epsilon=1e-6, name=f'ln1_{i}')(x + attn_out)
+        x = layers.LayerNormalization(epsilon=1e-5, name=f'ln1_{i}')(x + attn_out)
         
         # Feedforward
         ff_out = layers.Dense(config.ENC_FF, activation='relu', name=f'ff1_{i}')(x)
         ff_out = layers.Dropout(config.DROPOUT, name=f'drop_{i}')(ff_out)
         ff_out = layers.Dense(config.DMODEL, name=f'ff2_{i}')(ff_out)
         
-        x = layers.LayerNormalization(epsilon=1e-6, name=f'ln2_{i}')(x + ff_out)
+        x = layers.LayerNormalization(epsilon=1e-5, name=f'ln2_{i}')(x + ff_out)
     
     # Multi-head pooling
     pooled = MultiHeadPooling(config.DMODEL, name='pooling')(x, mask_input)
