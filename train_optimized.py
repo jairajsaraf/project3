@@ -352,19 +352,23 @@ class MultiHeadPooling(layers.Layer):
         # mask: (batch, seq)
 
         if mask is not None:
-            # Cast mask to match input dtype (handles mixed precision)
-            mask_float = tf.cast(mask, x.dtype)[:, :, tf.newaxis]
-            masked_x = x * mask_float
-            # Use 1e-6 instead of 1e-9 to avoid underflow in float16
-            seq_len = tf.reduce_sum(mask_float, axis=1) + 1e-6  # Shape: [batch, 1]
+            # Cast mask to float32 for stable division
+            mask_float = tf.cast(mask, tf.float32)[:, :, tf.newaxis]
+            # Cast x to float32 for mean calculation
+            x_float32 = tf.cast(x, tf.float32)
+            masked_x = x_float32 * mask_float
+            # Sum of mask values (number of valid tokens per batch)
+            seq_len = tf.reduce_sum(mask_float, axis=1, keepdims=False) + 1e-6  # Shape: [batch, 1]
         else:
-            masked_x = x
+            x_float32 = tf.cast(x, tf.float32)
+            masked_x = x_float32
             # Ensure consistent shape [batch, 1] for seq_len
             batch_size = tf.shape(x)[0]
-            seq_len = tf.fill([batch_size, 1], tf.cast(tf.shape(x)[1], x.dtype))
+            seq_len = tf.fill([batch_size, 1], tf.cast(tf.shape(x)[1], tf.float32))
 
-        # Mean pooling
+        # Mean pooling in float32 for numerical stability
         mean_pool = tf.reduce_sum(masked_x, axis=1) / seq_len  # Shape: [batch, d_model]
+        mean_pool = tf.cast(mean_pool, x.dtype)  # Cast back to mixed precision dtype
 
         # Max pooling - use -1e4 instead of -1e9 to avoid overflow in float16
         if mask is not None:
