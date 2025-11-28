@@ -350,40 +350,43 @@ class MultiHeadPooling(layers.Layer):
     def call(self, x, mask=None):
         # x: (batch, seq, d_model)
         # mask: (batch, seq)
-        
+
         if mask is not None:
             # Cast mask to match input dtype (handles mixed precision)
             mask_float = tf.cast(mask, x.dtype)[:, :, tf.newaxis]
             masked_x = x * mask_float
-            seq_len = tf.reduce_sum(mask_float, axis=1) + 1e-9  # Shape: [batch, 1]
+            # Use 1e-6 instead of 1e-9 to avoid underflow in float16
+            seq_len = tf.reduce_sum(mask_float, axis=1) + 1e-6  # Shape: [batch, 1]
         else:
             masked_x = x
-            seq_len = tf.cast(tf.shape(x)[1], x.dtype)
+            # Ensure consistent shape [batch, 1] for seq_len
+            batch_size = tf.shape(x)[0]
+            seq_len = tf.fill([batch_size, 1], tf.cast(tf.shape(x)[1], x.dtype))
 
         # Mean pooling
         mean_pool = tf.reduce_sum(masked_x, axis=1) / seq_len  # Shape: [batch, d_model]
-        
-        # Max pooling
+
+        # Max pooling - use -1e4 instead of -1e9 to avoid overflow in float16
         if mask is not None:
-            masked_for_max = tf.where(mask[:, :, tf.newaxis], x, tf.cast(-1e9, x.dtype))
+            masked_for_max = tf.where(mask[:, :, tf.newaxis], x, tf.cast(-1e4, x.dtype))
         else:
             masked_for_max = x
         max_pool = tf.reduce_max(masked_for_max, axis=1)
-        
-        # Min pooling
+
+        # Min pooling - use 1e4 instead of 1e9 to avoid overflow in float16
         if mask is not None:
-            masked_for_min = tf.where(mask[:, :, tf.newaxis], x, tf.cast(1e9, x.dtype))
+            masked_for_min = tf.where(mask[:, :, tf.newaxis], x, tf.cast(1e4, x.dtype))
         else:
             masked_for_min = x
         min_pool = tf.reduce_min(masked_for_min, axis=1)
-        
-        # Attention pooling
+
+        # Attention pooling - use -1e4 instead of -1e9
         attn_scores = self.attn_weights(x)  # (batch, seq, 1)
         if mask is not None:
-            attn_scores = tf.where(mask[:, :, tf.newaxis], attn_scores, tf.cast(-1e9, x.dtype))
+            attn_scores = tf.where(mask[:, :, tf.newaxis], attn_scores, tf.cast(-1e4, x.dtype))
         attn_weights = tf.nn.softmax(attn_scores, axis=1)
         attn_pool = tf.reduce_sum(x * attn_weights, axis=1)
-        
+
         # Concatenate all pooling methods
         pooled = tf.concat([mean_pool, max_pool, min_pool, attn_pool], axis=-1)
         return pooled
