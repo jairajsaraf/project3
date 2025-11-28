@@ -355,13 +355,13 @@ class MultiHeadPooling(layers.Layer):
             # Cast mask to match input dtype (handles mixed precision)
             mask_float = tf.cast(mask, x.dtype)[:, :, tf.newaxis]
             masked_x = x * mask_float
-            seq_len = tf.reduce_sum(mask_float, axis=1, keepdims=True) + 1e-9
+            seq_len = tf.reduce_sum(mask_float, axis=1) + 1e-9  # Shape: [batch, 1]
         else:
             masked_x = x
             seq_len = tf.cast(tf.shape(x)[1], x.dtype)
-        
+
         # Mean pooling
-        mean_pool = tf.reduce_sum(masked_x, axis=1) / seq_len
+        mean_pool = tf.reduce_sum(masked_x, axis=1) / seq_len  # Shape: [batch, d_model]
         
         # Max pooling
         if mask is not None:
