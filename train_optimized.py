@@ -49,7 +49,7 @@ class BaseConfig:
     # Problem constants
     N_FIXED = 9
     K_VALUES = [4, 5, 6]
-    M_VALUES = [2, 3]
+    M_VALUES = [2, 3, 4, 5, 6]
     MAX_K = 6
     MAX_PARITY = 5
     
@@ -507,8 +507,8 @@ def train_pretrain_mode(config, args):
     
     ds1_input = args.ds1_input or 'data/DS-1-samples_n_k_m_P.pkl'
     ds1_output = args.ds1_output or 'data/DS-1-samples_mHeights.pkl'
-    ds2_input = args.ds2_input or 'data/DS-2-samples_n_k_m_P.pkl'
-    ds2_output = args.ds2_output or 'data/DS-2-samples_mHeights.pkl'
+    ds2_input = args.ds2_input or 'data/DS-2-Train-n_k_m_P.pkl'
+    ds2_output = args.ds2_output or 'data/DS-2-Train-mHeights.pkl'
     
     logger.info(f"Loading DS-1 from {ds1_input}...")
     n1, k1, m1, P1, mh1 = load_dataset(ds1_input, ds1_output)
