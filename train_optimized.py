@@ -49,7 +49,7 @@ class BaseConfig:
     # Problem constants
     N_FIXED = 9
     K_VALUES = [4, 5, 6]
-    M_VALUES = [2, 3]
+    M_VALUES = [2, 3, 4, 5, 6]
     MAX_K = 6
     MAX_PARITY = 5
     
