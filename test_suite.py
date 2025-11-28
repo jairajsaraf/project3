@@ -38,8 +38,8 @@ print("-" * 70)
 
 # Load test data
 n, k, m, P, mh = load_dataset(
-    '/mnt/user-data/uploads/DS-1-samples_n_k_m_P.pkl',
-    '/mnt/user-data/uploads/DS-1-samples_mHeights.pkl'
+    'data/DS-1-samples_n_k_m_P.pkl',
+    'data/DS-1-samples_mHeights.pkl'
 )
 
 print(f"✓ Loaded {len(n)} samples")
